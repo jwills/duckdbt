@@ -31,6 +31,7 @@ setup(
         "dbt-buenavista~=1.3.0",
         "dbt-duckdb~=1.3.0",
         "duckdb~=0.6.0",
+        "fastapi[all]",
         "pyarrow",
         "target-duckdb~=0.4.0",
         "typer",
