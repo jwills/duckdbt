@@ -22,10 +22,17 @@
             </h6>
             
             <ul class="nav flex-column">
-              {% for relation in relations %}
-              <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="#">
+              {% for relation, columns in relations.items() %}
+              <li class="relation-item">
+                <a class="relation-link" aria-current="page" href="#" onclick="toggleColumns('{{ relation }}')">
                   {{ relation }}
+                  <div id="{{ relation }}-columns" style="display:none">
+                  <ul class="flex-column">
+                  {% for column in columns %}
+                  <li class="relation-column">{{ column }}</li>
+                  {% endfor %}
+                  </ul>
+                  </div>
                 </a>
               </li>
               {% endfor %}
@@ -58,6 +65,18 @@
       </div>
     </div>
 
+    <script>
+      function toggleColumns(relation) {
+        console.log("Whats up");
+        const columnsList = document.getElementById(relation + "-columns");
+        if (columnsList.style.display === "none") {
+          columnsList.style.display = "block";
+        } else {
+          columnsList.style.display = "none";
+        }
+      }
+    </script>
+  
     <script>
       var queryEditor = CodeMirror.fromTextArea(document.getElementById('code'), {
         mode: 'text/x-sql',
