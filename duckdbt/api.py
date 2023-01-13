@@ -1,6 +1,6 @@
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -29,12 +29,16 @@ class QueryRequest(BaseModel):
 @app.post("/api/query")
 def query(q: QueryRequest):
     handle = app.bv.adapter.create_handle()
-    query_result = handle.execute_sql(q.sql)
-    res = {}
-    if query_result.has_results():
-        res["columns"] = [
-            query_result.column(i)[0] for i in range(query_result.column_count())
-        ]
-        res["rows"] = list(query_result.rows())
-    handle.close()
+    try:
+        query_result = handle.execute_sql(q.sql)
+        res = {}
+        if query_result.has_results():
+            res["columns"] = [
+                query_result.column(i)[0] for i in range(query_result.column_count())
+            ]
+            res["rows"] = list(query_result.rows())
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    finally:
+        handle.close()
     return res

@@ -1,17 +1,110 @@
 <html>
   <head>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.57.0/lib/codemirror.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/codemirror@5.57.0/lib/codemirror.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/codemirror@5.57.0/lib/codemirror.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/codemirror@5.57.0/mode/sql/sql.js"></script>
   </head>
   <body>
-    <form id="query-form" method="post" action="/query">
-        <textarea id="code" name="code"></textarea>
-        <button type="submit">Execute Query</button>
-    </form>
+    <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
+      <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6" href="#">DuckDBT</a>
+    </header>
+    
+    <div class="container-fluid">
+      <div class="row">
+        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+          <div class="position-sticky pt-3 sidebar-sticky">
 
-    <table id="result-table">
-    </table>
+            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted text-uppercase">
+              <span>Tables</span>
+            </h6>
+            
+            <ul class="nav flex-column">
+              <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="#">
+                  Table1
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">
+                  Table2
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">
+                  Table3
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">
+                  Table4
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">
+                  Table5
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">
+                  Table6
+                </a>
+              </li>
+            </ul>
+    
+            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted text-uppercase">
+              <span>Recent queries</span>
+            </h6>
+            <ul class="nav flex-column mb-2">
+              <li class="nav-item">
+                <a class="nav-link" href="#">
+                  Query1
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">
+                  Query2
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">
+                  Query3
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">
+                  Query4
+                </a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+    
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+
+          <form id="query-form" method="post" action="/query">
+            <textarea class="my-4 w-100" id="code" width="900" height="380"></textarea>
+
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+              <div class="btn-toolbar mb-2 mb-md-0">
+                <div class="btn-group me-2">
+                  <button type="submit" class="btn btn-sm btn-outline-secondary">Run</button>
+                </div>
+              </div>
+            </div>
+          </form>
+
+          <div id="query-error" class="alert alert-danger" role="alert" hidden="true">
+          </div>
+
+          <div class="table-responsive">
+            <table id="result-table" class="table table-striped table-sm">
+            </table>
+          </div>
+        </main>
+      </div>
+    </div>
 
     <script>
       var queryEditor = CodeMirror.fromTextArea(document.getElementById('code'), {
@@ -21,7 +114,8 @@
       });
 
       const form = document.getElementById('query-form');
-      const table = document.getElementById('result-table');
+      const resultTable = document.getElementById('result-table');
+      const queryError = document.getElementById("query-error");
 
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
@@ -33,23 +127,30 @@
             method: 'POST',
             body: JSON.stringify({"sql": queryEditor.getValue()})
         });
-        const data = await response.json();
+        if (response.status != 200) {
+          queryError.hidden = false;
+          queryError.innerText = (await response.json())["detail"];
+          resultTable.innerHTML = "";
+        } else {
+          const data = await response.json();
 
-        // update the table with the new data
-        table.innerHTML = `
-        <thead>
+          // update the table with the new data
+          queryError.hidden = true;
+          queryError.innerText = "";
+
+          resultTable.innerHTML = `
+          <thead>
+              ${data.columns.map((column) => `<th scope="col">${column}</th>`).join('')}
+          </thead>
+          <tbody>
+          ${data.rows.map((row) => `
             <tr>
-            ${data.columns.map((column) => `<th>${column}</th>`).join('')}
+              ${row.map((cell) => `<td>${cell}</td>`).join('')}
             </tr>
-        </thead>
-        <tbody>
-        ${data.rows.map((row) => `
-          <tr>
-            ${row.map((cell) => `<td>${cell}</td>`).join('')}
-          </tr>
-        `).join('')}
-        </tbody>
-        `;
+          `).join('')}
+          </tbody>
+          `;
+        }
     });
   </script>
   </body>
