@@ -1,4 +1,3 @@
-
 from typing import Any, Dict
 
 from buenavista.adapter import Adapter
@@ -21,6 +20,7 @@ def _duckdb_adapter(config: Dict[str, Any]) -> Adapter:
 
 def _postgres_adapter(config: Dict[str, Any]) -> Adapter:
     from buenavista.backends.postgres import PGAdapter
+
     kwargs = {}
     for k in ("host", "port", "user", "password", "dbname"):
         if k in config:
@@ -28,7 +28,9 @@ def _postgres_adapter(config: Dict[str, Any]) -> Adapter:
     return PGAdapter(**kwargs)
 
 
-def create(bv_config: Dict[str, Any], backing_config: Dict[str, Any]) -> BuenaVistaServer:
+def create(
+    bv_config: Dict[str, Any], backing_config: Dict[str, Any]
+) -> BuenaVistaServer:
     backing_type = backing_config["type"]
     if backing_type == "postgres":
         adapter = _postgres_adapter(backing_config)
@@ -36,7 +38,7 @@ def create(bv_config: Dict[str, Any], backing_config: Dict[str, Any]) -> BuenaVi
         adapter = _duckdb_adapter(backing_config)
     else:
         raise Exception(f"Unsupported backing type for Buena Vista: {backing_type}")
-    
+
     server_address = (bv_config.get("host"), bv_config.get("port"))
     return BuenaVistaServer(server_address, adapter, extensions=[DbtPythonRunner()])
 
@@ -106,7 +108,12 @@ if __name__ == "__main__":
         bv_server_thread.daemon = True
         bv_server_thread.start()
 
-        uvicorn.run(app, host=bv_dict.get("host"), port=bv_dict.get("api_port"), log_level=bv_dict.get("log_level", "info"))
+        uvicorn.run(
+            app,
+            host=bv_dict.get("host"),
+            port=bv_dict.get("api_port"),
+            log_level=bv_dict.get("log_level", "info"),
+        )
     else:
         print(f"Starting Buena Vista server at {bv_server.server_address}")
         bv_server.serve_forever()

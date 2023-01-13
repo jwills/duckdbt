@@ -6,6 +6,7 @@
     <script src="https://cdn.jsdelivr.net/npm/codemirror@5.57.0/lib/codemirror.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/codemirror@5.57.0/mode/sql/sql.js"></script>
   </head>
+
   <body>
     <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
       <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6" href="#">DuckDBT</a>
@@ -61,7 +62,7 @@
       var queryEditor = CodeMirror.fromTextArea(document.getElementById('code'), {
         mode: 'text/x-sql',
         indentWithTabs: true,
-        lineNumbers: true
+        lineNumbers: true,
       });
 
       const form = document.getElementById('query-form');
