@@ -15,11 +15,11 @@ app = FastAPI(title="DuckDBT")
 BASE_PATH = Path(__file__).resolve().parent
 TEMPLATES = Jinja2Templates(directory=str(BASE_PATH / "templates"))
 
-#app.mount(
-#    "/static",
-#    StaticFiles(directory=BASE_PATH / "static"),
-#    name="static",
-#)
+app.mount(
+    "/static",
+    StaticFiles(directory=BASE_PATH / "static"),
+    name="static",
+)
 
 
 def bv_handle() -> AdapterHandle:
