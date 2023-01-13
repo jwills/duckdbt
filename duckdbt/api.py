@@ -1,44 +1,73 @@
-import os
+from pathlib import Path
+from typing import Any, List
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from fastapi.templating import Jinja2Templates
 
-# Use this to serve a public/index.html
+from pydantic import BaseModel
 from starlette.responses import FileResponse
 
-app = FastAPI()
-STATIC_FILE_DIR = os.path.join(os.path.dirname(__file__), "static")
+from buenavista.adapter import AdapterHandle
+
+app = FastAPI(title="DuckDBT")
+
+BASE_PATH = Path(__file__).resolve().parent
+TEMPLATES = Jinja2Templates(directory=str(BASE_PATH / "templates"))
 
 app.mount(
     "/static",
-    StaticFiles(directory=STATIC_FILE_DIR),
+    StaticFiles(directory=BASE_PATH / "static"),
     name="static",
 )
 
 
+def bv_handle() -> AdapterHandle:
+    handle = app.bv.adapter.create_handle()
+    try:
+        yield handle
+    finally:
+        handle.close()
+
+
 @app.get("/")
-def index():
-    return FileResponse(os.path.join(STATIC_FILE_DIR, "index.html"))
+def index(request: Request, handle = Depends(bv_handle)):
+    qr = handle.execute_sql("SELECT table_schema, table_name FROM information_schema.tables ORDER BY 1, 2")
+    if qr.has_results():
+        relations = [f"{s}.{t}" for (s, t) in qr.rows()]
+    else:
+        relations = []
+    return TEMPLATES.TemplateResponse("index.html", {"request": request, "relations": relations})
+
+
+@app.get("/api/list_columns")
+def list_columns(relation: str, handle = Depends(bv_handle)):
+    try:
+        schema, table = relation.split(".")
+        qr = handle.execute_sql("SELECT column_name FROM information_schema.columns WHERE table_schema = ? and table_name = ? ORDER BY ordinal_position", params=(schema, table))
+        if qr.has_results():
+            return [r[0] for r in qr.rows()]
+        return []
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 class QueryRequest(BaseModel):
     sql: str
 
+class QueryResult(BaseModel):
+    columns: List[str]
+    rows: List[List[Any]]
 
-@app.post("/api/query")
-def query(q: QueryRequest):
-    handle = app.bv.adapter.create_handle()
+@app.post("/api/query", response_model=QueryResult)
+def query(q: QueryRequest, handle = Depends(bv_handle)):
     try:
         query_result = handle.execute_sql(q.sql)
-        res = {}
         if query_result.has_results():
-            res["columns"] = [
+            columns = [
                 query_result.column(i)[0] for i in range(query_result.column_count())
             ]
-            res["rows"] = list(query_result.rows())
+            return QueryResult(columns=columns, rows=list(query_result.rows()))
+        return QueryResult(columns=[], rows=[])
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
-    finally:
-        handle.close()
-    return res

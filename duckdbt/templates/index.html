@@ -21,62 +21,13 @@
             </h6>
             
             <ul class="nav flex-column">
+              {% for relation in relations %}
               <li class="nav-item">
                 <a class="nav-link active" aria-current="page" href="#">
-                  Table1
+                  {{ relation }}
                 </a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">
-                  Table2
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">
-                  Table3
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">
-                  Table4
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">
-                  Table5
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">
-                  Table6
-                </a>
-              </li>
-            </ul>
-    
-            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted text-uppercase">
-              <span>Recent queries</span>
-            </h6>
-            <ul class="nav flex-column mb-2">
-              <li class="nav-item">
-                <a class="nav-link" href="#">
-                  Query1
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">
-                  Query2
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">
-                  Query3
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">
-                  Query4
-                </a>
-              </li>
+              {% endfor %}
             </ul>
           </div>
         </nav>

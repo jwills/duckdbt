@@ -1,1 +1,2 @@
-include duckdbt/static/*.html
+include duckdbt/static/*
+include duckdbt/templates/*
