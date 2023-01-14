@@ -44,6 +44,8 @@ def create(
 
 
 if __name__ == "__main__":
+    # Gratefully copied (with slight modifications) from
+    # https://github.com/fal-ai/fal/blob/main/adapter/src/dbt/adapters/fal/impl.py#L24
     import os
 
     from dbt.config.profile import Profile, read_profile

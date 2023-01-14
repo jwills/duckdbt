@@ -33,6 +33,5 @@ setup(
         "duckdb~=0.6.0",
         "fastapi[all]",
         "pyarrow",
-        "typer",
     ],
 )
