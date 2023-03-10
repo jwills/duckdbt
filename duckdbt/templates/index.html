@@ -104,7 +104,7 @@
           queryError.innerText = (await response.json())["detail"];
           resultTable.innerHTML = "";
         } else {
-          const data = await response.json();
+          const payload = await response.json();
 
           // update the table with the new data
           queryError.hidden = true;
@@ -112,10 +112,10 @@
 
           resultTable.innerHTML = `
           <thead>
-              ${data.columns.map((column) => `<th scope="col">${column[0]}</th>`).join('')}
+              ${payload.columns.map((column) => `<th scope="col">${column.name}</th>`).join('')}
           </thead>
           <tbody>
-          ${data.rows.map((row) => `
+          ${payload.data.map((row) => `
             <tr>
               ${row.map((cell) => `<td>${cell}</td>`).join('')}
             </tr>
