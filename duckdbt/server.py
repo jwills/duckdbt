@@ -1,46 +1,23 @@
+import logging
+import threading
 from typing import Any, Dict
 
-from buenavista.adapter import Adapter
-from buenavista.core import BuenaVistaServer
-from dbt.adapters.buenavista.python_extension import DbtPythonRunner
+import duckdb
+import uvicorn
+
+from buenavista.backends.duckdb import DuckDBConnection
+from buenavista.core import Connection
+from buenavista.examples import duckdb_http, duckdb_postgres
+from buenavista.postgres import BuenaVistaServer
+from buenavista.http.main import quacko
+
+from .extensions import DbtPythonRunner
+from .api import app
 
 
-def _duckdb_adapter(config: Dict[str, Any]) -> Adapter:
-    from buenavista.backends.duckdb import DuckDBAdapter
-    import duckdb
-
+def create(config: Dict[str, Any]) -> Connection:
     db = duckdb.connect(config["path"])
-    for e in config.get("extensions", []):
-        db.install_extension(e)
-        db.load_extension(e)
-    for key, value in config.get("settings", {}).items():
-        db.execute(f"SET {key} = '{value}'")
-    return DuckDBAdapter(db)
-
-
-def _postgres_adapter(config: Dict[str, Any]) -> Adapter:
-    from buenavista.backends.postgres import PGAdapter
-
-    kwargs = {}
-    for k in ("host", "port", "user", "password", "dbname"):
-        if k in config:
-            kwargs[k] = config[k]
-    return PGAdapter(**kwargs)
-
-
-def create(
-    bv_config: Dict[str, Any], backing_config: Dict[str, Any]
-) -> BuenaVistaServer:
-    backing_type = backing_config["type"]
-    if backing_type == "postgres":
-        adapter = _postgres_adapter(backing_config)
-    elif backing_type == "duckdb":
-        adapter = _duckdb_adapter(backing_config)
-    else:
-        raise Exception(f"Unsupported backing type for Buena Vista: {backing_type}")
-
-    server_address = (bv_config.get("host"), bv_config.get("port"))
-    return BuenaVistaServer(server_address, adapter, extensions=[DbtPythonRunner()])
+    return DuckDBConnection(db)
 
 
 if __name__ == "__main__":
@@ -87,35 +64,32 @@ if __name__ == "__main__":
     else:
         target_name = "default"
 
-    bv_dict = Profile._get_profile_data(raw_profile, profile_name, target_name)
-    delegate = bv_dict.get("delegate")
-    assert delegate, "buenavista targets must have a delegate field set"
+    logging.basicConfig(format="%(thread)d: %(message)s", level=logging.INFO)
 
-    base_profile_dict = Profile.from_raw_profiles(
-        raw_profiles,
-        profile_name,
-        renderer=profile_renderer,
-        target_override=delegate,
-    ).to_target_dict()
+    dict = Profile._get_profile_data(raw_profile, profile_name, target_name)
+    app.conn = create(dict)
+    extensions = [DbtPythonRunner()]
 
-    bv_server = create(bv_dict, base_profile_dict)
+    remote = dict.get("remote", {})
+    host = remote.get("host", "127.0.0.1")
+    api_port = int(remote.get("port", 8000))
+    pg_port = remote.get("pg_port")
 
-    if bv_dict.get("api_port"):
-        import threading
-        import uvicorn
-        from .api import app
-
-        app.bv = bv_server
-        bv_server_thread = threading.Thread(target=app.bv.serve_forever)
+    if pg_port:
+        address = (host, int(pg_port))
+        server = BuenaVistaServer(
+            address, app.conn, rewriter=duckdb_postgres.rewriter, extensions=extensions
+        )
+        bv_server_thread = threading.Thread(target=server.serve_forever)
         bv_server_thread.daemon = True
         bv_server_thread.start()
 
-        uvicorn.run(
-            app,
-            host=bv_dict.get("host"),
-            port=bv_dict.get("api_port"),
-            log_level=bv_dict.get("log_level", "info"),
-        )
-    else:
-        print(f"Starting Buena Vista server at {bv_server.server_address}")
-        bv_server.serve_forever()
+    # Configure the Presto protocol ("quacko") on the app
+    quacko(app, app.conn, duckdb_http.rewriter, extensions)
+
+    uvicorn.run(
+        app,
+        host=host,
+        port=api_port,
+        log_level=remote.get("log_level", "info"),
+    )
