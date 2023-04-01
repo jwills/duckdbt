@@ -10,13 +10,16 @@ from buenavista.core import Connection
 from buenavista.examples import duckdb_http, duckdb_postgres
 from buenavista.postgres import BuenaVistaServer
 from buenavista.http.main import quacko
+from dbt.adapters.duckdb.credentials import DuckDBCredentials
+from dbt.adapters.duckdb.environments import Environment
 
 from .extensions import DbtPythonRunner
 from .api import app
 
 
 def create(config: Dict[str, Any]) -> Connection:
-    db = duckdb.connect(config["path"])
+    creds = DuckDBCredentials.from_dict(config)
+    db = Environment.initialize_db(creds, duckdb.connect(config["path"]))
     return DuckDBConnection(db)
 
 
@@ -72,24 +75,25 @@ if __name__ == "__main__":
 
     remote = dict.get("remote", {})
     host = remote.get("host", "127.0.0.1")
-    api_port = int(remote.get("port", 8000))
-    pg_port = remote.get("pg_port")
+    pg_port = int(remote.get("port", 5433))
+    api_port = int(remote.get("api_port", 8080))
 
     if pg_port:
         address = (host, int(pg_port))
         server = BuenaVistaServer(
-            address, app.conn, rewriter=duckdb_postgres.rewriter, extensions=extensions
+            address, app.conn, extensions=extensions
         )
         bv_server_thread = threading.Thread(target=server.serve_forever)
         bv_server_thread.daemon = True
         bv_server_thread.start()
 
     # Configure the Presto protocol ("quacko") on the app
-    quacko(app, app.conn, duckdb_http.rewriter, extensions)
+    if api_port:
+        quacko(app, app.conn, duckdb_http.rewriter, extensions)
 
-    uvicorn.run(
-        app,
-        host=host,
-        port=api_port,
-        log_level=remote.get("log_level", "info"),
-    )
+        uvicorn.run(
+            app,
+            host=host,
+            port=api_port,
+            log_level=remote.get("log_level", "info"),
+        )
