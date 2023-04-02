@@ -7,7 +7,7 @@ import uvicorn
 
 from buenavista.backends.duckdb import DuckDBConnection
 from buenavista.core import Connection
-from buenavista.examples import duckdb_http, duckdb_postgres
+from buenavista.examples import duckdb_http
 from buenavista.postgres import BuenaVistaServer
 from buenavista.http.main import quacko
 from dbt.adapters.duckdb.credentials import DuckDBCredentials
@@ -19,7 +19,7 @@ from .api import app
 
 def create(config: Dict[str, Any]) -> Connection:
     creds = DuckDBCredentials.from_dict(config)
-    db = Environment.initialize_db(creds, duckdb.connect(config["path"]))
+    db = Environment.initialize_db(creds)
     return DuckDBConnection(db)
 
 
