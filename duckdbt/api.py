@@ -29,7 +29,11 @@ def bv_session() -> Session:
 @app.get("/")
 def index(request: Request, session=Depends(bv_session)):
     qr = session.execute_sql(
-        "SELECT table_schema, table_name, column_name FROM information_schema.columns ORDER BY table_schema, table_name, ordinal_position"
+        """
+        SELECT table_schema, table_name, column_name
+        FROM information_schema.columns
+        ORDER BY table_schema, table_name, ordinal_position
+        """
     )
     if qr.has_results():
         res = {}

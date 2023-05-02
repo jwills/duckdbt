@@ -35,3 +35,16 @@ class DbtPythonRunner(Extension):
             return SimpleQueryResult("msg", "Success", BVType.TEXT)
         finally:
             os.unlink(mod_file.name)
+
+
+class DbtLoadSource(Extension):
+    """An extension for the BuenaVista server that handles Python model generation in dbt."""
+
+    def __init__(self, plugin_configs: list):
+        pass
+
+    def type(self) -> str:
+        return "dbt_load_source"
+
+    def apply(self, params: dict, handle: Session) -> QueryResult:
+        pass
