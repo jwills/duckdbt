@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import os
-import re
 
 from setuptools import find_namespace_packages
 from setuptools import setup
@@ -12,7 +11,7 @@ with open(os.path.join(this_directory, "README.md")) as f:
 package_name = "duckdbt"
 
 
-package_version = "0.1.0"
+package_version = "0.3.0"
 description = """The Modern Data Stack in a Python Package"""
 
 setup(
@@ -27,11 +26,11 @@ setup(
     packages=find_namespace_packages(include=["duckdbt", "duckdbt.*"]),
     include_package_data=True,
     install_requires=[
-        "buenavista~=0.1.0",
-        "dbt-buenavista~=1.3.0",
-        "dbt-duckdb~=1.3.0",
-        "duckdb~=0.6.0",
+        "buenavista~=0.2.1",
+        "dbt-duckdb~=1.5.0",
+        "duckdb~=0.7.0",
         "fastapi[all]",
         "pyarrow",
+        "sqlglot",
     ],
 )
