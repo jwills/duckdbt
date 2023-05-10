@@ -1,22 +1,17 @@
 import threading
 
-from buenavista.postgres import BuenaVistaServer
-
 from .load_db_profile import load_duckdb_target
-from .server import create
+from .common import create_server
 
 
 def load_ipython_extension(ipython):
-    creds = load_duckdb_target()
-    conn, exts = create(creds)
-    remote = creds.remote
-    host, pg_port = remote.host, remote.port
-    server = BuenaVistaServer((host, pg_port), conn, extensions=exts)
+    server = create_server(load_duckdb_target())
     bv_server_thread = threading.Thread(target=server.serve_forever)
     bv_server_thread.start()
-    ipython.push({"db": conn.db})
+    ipython.push({"db": server.conn.db})
+    ip, port = server.server_address
     print(
-        f"Buena Vista server listening on {host}:{pg_port} and DuckDB connection available as 'db' variable."
+        f"Buena Vista server listening on {ip}:{port} and DuckDB connection available as 'db' variable."
     )
 
 
