@@ -37,5 +37,5 @@ if __name__ == "__main__":
 
     # Configure quacko and start the HTTP server
     app.conn = server.conn
-    quacko(app, app.conn, duckdb_http.rewriter, server.extensions)
+    quacko(app, app.conn, duckdb_http.rewriter, server.extensions.values())
     uvicorn.run(app, host=creds.remote.host, port=args.port, log_level=args.log_level)
