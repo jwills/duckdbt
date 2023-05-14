@@ -80,3 +80,22 @@ body {
   border-color: transparent;
   box-shadow: 0 0 0 3px rgba(255, 255, 255, .25);
 }
+
+.relation-item {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.relation-link {
+  display: block;
+  max-width: 100%;
+}
+
+.relation-link:hover {
+  text-decoration: none;
+}
+
+.relation-column {
+  padding-left: 1.5rem;
+}

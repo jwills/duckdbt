@@ -1,33 +1,17 @@
-import typing as t
+import argparse
+import logging
+import threading
 
-from buenavista.backends.duckdb import DuckDBConnection
-from buenavista.core import Connection, Extension
-from dbt.adapters.duckdb.credentials import DuckDBCredentials
-from dbt.adapters.duckdb.environments import Environment
+import uvicorn
+from buenavista.examples import duckdb_http
+from buenavista.http.main import quacko
 
-from . import extensions
-
-
-def create(creds: DuckDBCredentials) -> t.Tuple[Connection, t.List[Extension]]:
-    db = Environment.initialize_db(creds)
-    conn = DuckDBConnection(db)
-    exts = [extensions.DbtPythonRunner(), extensions.DbtLoadSource(creds.plugins)]
-    return conn, exts
+from . import common
+from .api import app
+from .load_db_profile import load_duckdb_target
 
 
 if __name__ == "__main__":
-    import argparse
-    import logging
-    import threading
-
-    import uvicorn
-    from buenavista.examples import duckdb_http
-    from buenavista.postgres import BuenaVistaServer
-    from buenavista.http.main import quacko
-
-    from .api import app
-    from .load_db_profile import load_duckdb_target
-
     logging.basicConfig(format="%(thread)d: %(message)s", level=logging.INFO)
 
     parser = argparse.ArgumentParser()
@@ -46,17 +30,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     creds = load_duckdb_target()
-    conn, exts = create(creds)
-    app.conn = conn
-
-    # Postgres server setup
-    remote = creds.remote
-    host, pg_port = remote.host, remote.port
-    server = BuenaVistaServer((host, pg_port), app.conn, extensions=exts)
+    server = common.create_server(creds)
     bv_server_thread = threading.Thread(target=server.serve_forever)
     bv_server_thread.daemon = True
     bv_server_thread.start()
 
     # Configure quacko and start the HTTP server
-    quacko(app, app.conn, duckdb_http.rewriter, exts)
-    uvicorn.run(app, host=host, port=args.port, log_level=args.log_level)
+    app.conn = server.conn
+    quacko(app, app.conn, duckdb_http.rewriter, server.extensions.values())
+    uvicorn.run(app, host=creds.remote.host, port=args.port, log_level=args.log_level)
