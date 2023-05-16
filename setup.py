@@ -26,7 +26,7 @@ setup(
     packages=find_namespace_packages(include=["duckdbt", "duckdbt.*"]),
     include_package_data=True,
     install_requires=[
-        "buenavista[duckdb]~=0.2.2",
+        "buenavista[duckdb]~=0.3.0",
         "dbt-duckdb~=1.5.0",
         "duckdb~=0.7.0",
         "fastapi[all]",
