@@ -11,7 +11,7 @@ with open(os.path.join(this_directory, "README.md")) as f:
 package_name = "duckdbt"
 
 
-package_version = "0.3.2"
+package_version = "0.4.0"
 description = """The Modern Data Stack in a Python Package"""
 
 setup(
@@ -28,7 +28,7 @@ setup(
     install_requires=[
         "buenavista[duckdb]~=0.3.0",
         "dbt-duckdb~=1.5.0",
-        "duckdb~=0.7.0",
+        "duckdb~=0.8.0",
         "fastapi[all]",
         "psycopg2-binary",
     ],
