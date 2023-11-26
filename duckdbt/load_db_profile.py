@@ -28,6 +28,7 @@ def load_duckdb_target(project_root: str = ".") -> DuckDBCredentials:
             raw_profiles = read_profile(profile_dir)
             if profile_name in raw_profiles:
                 raw_profile = raw_profiles[profile_name]
+                break
     if not raw_profile:
         raise ValueError(
             f"Could not find profile '{profile_name}' in ./profiles.yml or ~/.dbt/profiles.yml"

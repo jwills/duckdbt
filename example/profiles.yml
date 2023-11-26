@@ -1,0 +1,16 @@
+example:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: dev.duckdb
+      threads: 1
+      remote:
+        host: localhost
+        port: 5433
+        user: "{{ env_var('USER') }}"
+
+    prod:
+      type: duckdb
+      path: prod.duckdb
+      threads: 4
